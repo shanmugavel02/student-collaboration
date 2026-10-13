@@ -1,0 +1,159 @@
+* {
+  box-sizing: border-box;
+}
+
+.projects-container {
+  min-height: 100vh;
+  padding: 40px;
+  background-color: #f2f5f9;
+}
+
+.projects-container h1 {
+  text-align: center;
+  color: #1f2937;
+  margin-bottom: 30px;
+}
+
+.back-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  background-color: #374151;
+  color: white;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #1f2937;
+}
+
+.project-message {
+  width: 600px;
+  max-width: 100%;
+  margin: 0 auto 20px;
+  padding: 12px;
+  text-align: center;
+  background-color: #dcfce7;
+  color: #166534;
+  border-radius: 6px;
+}
+
+.project-form-box {
+  width: 600px;
+  max-width: 100%;
+  margin: auto;
+  padding: 30px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.project-form-box h2 {
+  text-align: center;
+  color: #2563eb;
+  margin-bottom: 25px;
+}
+
+.project-form-box form {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-form-box label {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.project-form-box input,
+.project-form-box textarea {
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  font-family: Arial, sans-serif;
+}
+
+.project-form-box input:focus,
+.project-form-box textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.project-form-box small {
+  color: #6b7280;
+  margin-top: 5px;
+}
+
+.create-project-button {
+  margin-top: 25px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.create-project-button:hover {
+  background-color: #1d4ed8;
+}
+
+.my-projects-section {
+  margin-top: 40px;
+}
+
+.my-projects-section h2 {
+  text-align: center;
+  color: #1f2937;
+}
+
+.no-projects {
+  text-align: center;
+  color: #6b7280;
+}
+
+.projects-grid {
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.project-card {
+  background-color: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.project-card h3 {
+  color: #2563eb;
+}
+
+.project-card p {
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .projects-container {
+    padding: 20px;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+
+}

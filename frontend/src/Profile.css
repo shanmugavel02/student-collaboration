@@ -1,0 +1,369 @@
+* {
+  box-sizing: border-box;
+}
+
+
+.profile-container {
+  min-height: 100vh;
+
+  padding: 40px;
+
+  background-color: #f2f5f9;
+}
+
+
+.profile-container h1 {
+  text-align: center;
+
+  color: #1f2937;
+
+  margin-bottom: 30px;
+}
+
+
+/* ===============================
+   BACK BUTTON
+   =============================== */
+
+.back-button {
+  padding: 10px 15px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background-color: #374151;
+
+  color: white;
+
+  cursor: pointer;
+
+  margin-bottom: 20px;
+}
+
+
+.back-button:hover {
+  background-color: #1f2937;
+}
+
+
+/* ===============================
+   PROFILE BOX
+   =============================== */
+
+.profile-box {
+  width: 500px;
+
+  max-width: 100%;
+
+  margin: auto;
+
+  padding: 30px;
+
+  background-color: white;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 4px 15px
+    rgba(0, 0, 0, 0.1);
+}
+
+
+/* ===============================
+   PROFILE ICON
+   =============================== */
+
+.profile-avatar {
+  text-align: center;
+
+  font-size: 60px;
+}
+
+
+/* ===============================
+   PROFILE NAME
+   =============================== */
+
+.profile-box h2 {
+  text-align: center;
+
+  color: #2563eb;
+
+  margin-bottom: 25px;
+}
+
+
+/* ===============================
+   PROFILE INFORMATION
+   =============================== */
+
+.profile-box p {
+  padding: 12px;
+
+  border-bottom:
+    1px solid #e5e7eb;
+
+  color: #374151;
+
+  line-height: 1.5;
+}
+
+
+/* ===============================
+   FORM
+   =============================== */
+
+.profile-box form {
+  display: flex;
+
+  flex-direction: column;
+}
+
+
+/* ===============================
+   LABEL
+   =============================== */
+
+.profile-box label {
+  margin-top: 15px;
+
+  margin-bottom: 5px;
+
+  font-weight: bold;
+
+  color: #374151;
+}
+
+
+/* ===============================
+   INPUT
+   =============================== */
+
+.profile-box input,
+.profile-box select,
+.profile-box textarea {
+
+  padding: 11px;
+
+  border:
+    1px solid #ccc;
+
+  border-radius: 6px;
+
+  font-size: 15px;
+
+  font-family: Arial, sans-serif;
+}
+
+
+.profile-box input:focus,
+.profile-box select:focus,
+.profile-box textarea:focus {
+
+  outline: none;
+
+  border-color: #2563eb;
+}
+
+
+/* ===============================
+   DISABLED EMAIL
+   =============================== */
+
+.profile-box input:disabled {
+
+  background-color: #e5e7eb;
+
+  cursor: not-allowed;
+}
+
+
+/* ===============================
+   SMALL TEXT
+   =============================== */
+
+.profile-box small {
+
+  color: #6b7280;
+
+  margin-top: 5px;
+}
+
+
+/* ===============================
+   TEXTAREA
+   =============================== */
+
+.profile-box textarea {
+
+  resize: vertical;
+}
+
+
+/* ===============================
+   EDIT BUTTON
+   =============================== */
+
+.edit-button {
+
+  width: 100%;
+
+  margin-top: 25px;
+
+  padding: 12px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background-color: #2563eb;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 15px;
+}
+
+
+.edit-button:hover {
+
+  background-color: #1d4ed8;
+}
+
+
+/* ===============================
+   BUTTON GROUP
+   =============================== */
+
+.button-group {
+
+  display: flex;
+
+  gap: 10px;
+}
+
+
+/* ===============================
+   SAVE BUTTON
+   =============================== */
+
+.save-button {
+
+  flex: 1;
+
+  margin-top: 25px;
+
+  padding: 12px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background-color: #2563eb;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 15px;
+}
+
+
+.save-button:hover {
+
+  background-color: #1d4ed8;
+}
+
+
+/* ===============================
+   CANCEL BUTTON
+   =============================== */
+
+.cancel-button {
+
+  flex: 1;
+
+  margin-top: 25px;
+
+  padding: 12px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background-color: #6b7280;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 15px;
+}
+
+
+.cancel-button:hover {
+
+  background-color: #4b5563;
+}
+
+
+/* ===============================
+   SUCCESS MESSAGE
+   =============================== */
+
+.profile-message {
+
+  width: 500px;
+
+  max-width: 100%;
+
+  margin:
+    0 auto 20px;
+
+  padding: 12px;
+
+  text-align: center;
+
+  background-color: #dcfce7;
+
+  color: #166534;
+
+  border-radius: 6px;
+}
+
+
+/* ===============================
+   MOBILE
+   =============================== */
+
+@media (max-width: 600px) {
+
+  .profile-container {
+
+    padding: 20px;
+
+  }
+
+  .profile-box {
+
+    width: 100%;
+
+    padding: 20px;
+
+  }
+
+  .profile-message {
+
+    width: 100%;
+
+  }
+
+  .button-group {
+
+    flex-direction: column;
+
+  }
+
+}

@@ -1,0 +1,139 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f2f5f9;
+}
+
+.dashboard {
+  min-height: 100vh;
+}
+
+/* Header */
+
+.dashboard-header {
+  background-color: #2563eb;
+  color: white;
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.logout-btn {
+  background-color: white;
+  color: #2563eb;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.logout-btn:hover {
+  background-color: #e5e7eb;
+}
+
+/* Welcome */
+
+.welcome-section {
+  padding: 35px 50px 20px;
+}
+
+.welcome-section h2 {
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.welcome-section p {
+  color: #6b7280;
+}
+
+/* Dashboard Grid */
+
+.dashboard-grid {
+  padding: 20px 50px 50px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+/* Cards */
+
+.dashboard-card {
+  background-color: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: 0.2s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+}
+
+.card-icon {
+  font-size: 35px;
+  margin-bottom: 10px;
+}
+
+.dashboard-card h3 {
+  margin: 10px 0;
+  color: #1f2937;
+}
+
+.dashboard-card p {
+  color: #6b7280;
+  min-height: 40px;
+}
+
+.dashboard-card button {
+  margin-top: 15px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.dashboard-card button:hover {
+  background-color: #1d4ed8;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-header {
+    padding: 15px 20px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+
+  .welcome-section {
+    padding: 25px 20px 10px;
+  }
+
+  .dashboard-grid {
+    padding: 20px;
+    grid-template-columns: 1fr;
+  }
+}
+

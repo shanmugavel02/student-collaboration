@@ -1,0 +1,182 @@
+
+.find-projects-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: #f4f7fb;
+  color: #1e293b;
+  font-family: Arial, sans-serif;
+}
+
+.find-projects-header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+}
+
+.find-back-button {
+  padding: 10px 16px;
+  margin-bottom: 22px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  cursor: pointer;
+}
+
+.find-projects-header h1 {
+  margin: 0 0 8px;
+  color: #1d4ed8;
+  font-size: 32px;
+}
+
+.find-projects-header p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.find-projects-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.find-projects-tools {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.find-projects-tools input,
+.find-projects-tools select {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+}
+
+.find-projects-tools input {
+  flex: 1;
+}
+
+.find-projects-tools select {
+  width: 190px;
+}
+
+.find-count {
+  margin-bottom: 18px;
+  color: #64748b;
+}
+
+.find-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.find-project-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
+}
+
+.find-project-card h2 {
+  margin: 0 0 14px;
+  color: #1d4ed8;
+  font-size: 21px;
+  overflow-wrap: anywhere;
+}
+
+.find-description {
+  min-height: 48px;
+  margin: 0 0 20px;
+  color: #475569;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.find-project-meta {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #475569;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.find-project-card h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.find-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.find-skill-tag {
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 13px;
+}
+
+.find-no-skills {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.find-empty,
+.find-status {
+  padding: 30px;
+  border-radius: 12px;
+  background: white;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.find-empty h2 {
+  margin-top: 0;
+}
+
+.find-empty p {
+  color: #64748b;
+}
+
+.find-error {
+  color: #b91c1c;
+}
+
+.find-error button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: white;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .find-projects-page {
+    padding: 18px;
+  }
+
+  .find-projects-header h1 {
+    font-size: 26px;
+  }
+
+  .find-projects-tools {
+    flex-direction: column;
+  }
+
+  .find-projects-tools select {
+    width: 100%;
+  }
+}
