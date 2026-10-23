@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 function ManageApplications() {
   const navigate = useNavigate();
-
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
