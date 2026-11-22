@@ -1,3 +1,4 @@
+import Settings from "./Settings";
 import { useState } from "react";
 import {
   Routes,
@@ -285,6 +286,7 @@ function App() {
         path="/manage-applications"
         element={<ManageApplications />}
       />
+      <Route path="/settings" element={<Settings />} />
     </Routes>
   );
 }

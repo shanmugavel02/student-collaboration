@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const applicationSchema = new mongoose.Schema(
@@ -9,7 +8,14 @@ const applicationSchema = new mongoose.Schema(
       required: true
     },
 
+    // Keep internally for the owner/application records
     projectName: {
+      type: String,
+      required: true
+    },
+
+    // Public project identifier
+    projectCode: {
       type: String,
       required: true
     },
@@ -50,4 +56,5 @@ applicationSchema.index(
   { unique: true }
 );
 
-module.exports = mongoose.model("Application", applicationSchema);
+module.exports =
+  mongoose.model("Application", applicationSchema);

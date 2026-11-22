@@ -1,305 +1,649 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./FindProjects.css";
 
 function FindProjects() {
   const navigate = useNavigate();
 
-  const email = (
-    localStorage.getItem("studentEmail") || ""
-  ).trim().toLowerCase();
-
   const [projects, setProjects] = useState([]);
-  const [search, setSearch] = useState("");
-  const [selectedSkill, setSelectedSkill] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [applyingId, setApplyingId] = useState("");
-  const [appliedIds, setAppliedIds] = useState([]);
-  const [message, setMessage] = useState("");
+
+  /* =================================
+     LOAD PROJECTS
+  ================================= */
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch(
-          "http://localhost:5000/api/projects/all"
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to load projects"
-          );
-        }
-
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid projects response");
-        }
-
-        setProjects(data);
-      } catch (err) {
-        setError(err.message || "Could not load projects");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjects();
+    loadProjects();
   }, []);
 
-  const skills = useMemo(() => {
-    return [
-      ...new Set(
-        projects.flatMap((project) =>
-          Array.isArray(project.requiredSkills)
-            ? project.requiredSkills
-            : []
-        )
-      ),
-    ];
-  }, [projects]);
-
-  const filteredProjects = projects.filter((project) => {
-    const ownerEmail = (
-      project.ownerEmail || ""
-    ).trim().toLowerCase();
-
-    if (ownerEmail === email) return false;
-
-    const text = (
-      (project.projectName || "") +
-      " " +
-      (project.description || "")
-    ).toLowerCase();
-
-    const matchesSearch = text.includes(
-      search.toLowerCase()
-    );
-
-    const projectSkills = Array.isArray(
-      project.requiredSkills
-    )
-      ? project.requiredSkills
-      : [];
-
-    const matchesSkill =
-      !selectedSkill ||
-      projectSkills.includes(selectedSkill);
-
-    return matchesSearch && matchesSkill;
-  });
-
-  const handleApply = async (project) => {
-    if (!email) {
-      setMessage("Please log in before applying.");
-      return;
-    }
-
-    const projectId = project._id;
-
-    if (!projectId) {
-      setMessage("Project ID is missing.");
-      return;
-    }
-
+  const loadProjects = async () => {
     try {
-      setApplyingId(projectId);
-      setMessage("");
+      setLoading(true);
+      setError("");
 
       const response = await fetch(
-        "http://localhost:5000/api/applications/apply",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            projectId,
-            applicantEmail: email,
-            message: "",
-          }),
-        }
+        "http://localhost:5000/api/projects/opportunities"
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Application failed"
+          data.message || "Failed to load projects"
         );
       }
 
-      setAppliedIds((previous) => [
-        ...previous,
-        projectId,
-      ]);
+      setProjects(
+        Array.isArray(data) ? data : []
+      );
 
-      setMessage(
-        `Application submitted for "${project.projectName}"!`
+    } catch (error) {
+      console.error(
+        "Error loading projects:",
+        error
       );
-    } catch (err) {
-      setMessage(
-        err.message || "Could not submit application"
+
+      setError(
+        "Unable to load projects. Please try again."
       );
+
     } finally {
-      setApplyingId("");
+      setLoading(false);
     }
   };
 
+
+  /* =================================
+     SEARCH PROJECTS
+  ================================= */
+
+  const filteredProjects = projects.filter(
+    (project) => {
+
+      const search = searchText
+        .toLowerCase()
+        .trim();
+
+      /* Show all projects when search is empty */
+
+      if (!search) {
+        return true;
+      }
+
+
+      /* Project name */
+
+      const projectName =
+        project.projectName || "";
+
+
+      /* Description */
+
+      const description =
+        project.description || "";
+
+
+      /* Project code */
+
+      const projectCode =
+        project.projectCode || "";
+
+
+      /* Domain */
+
+      const domain =
+        project.domain || "";
+
+
+      /* Programming language */
+
+      const programmingLanguage =
+        project.programmingLanguage || "";
+
+
+      /* AI tools */
+
+      const aiTools =
+        Array.isArray(project.aiTools)
+          ? project.aiTools.join(" ")
+          : project.aiTools || "";
+
+
+      /* Required skills */
+
+      const requiredSkills =
+        Array.isArray(project.requiredSkills)
+          ? project.requiredSkills.join(" ")
+          : project.requiredSkills || "";
+
+
+      /*
+        Combine all searchable information
+        into one string
+      */
+
+      const searchableText = `
+        ${projectName}
+        ${description}
+        ${projectCode}
+        ${domain}
+        ${programmingLanguage}
+        ${aiTools}
+        ${requiredSkills}
+      `.toLowerCase();
+
+
+      /*
+        Check whether the search text
+        exists anywhere in the project
+      */
+
+      return searchableText.includes(search);
+
+    }
+  );
+
+
   return (
     <div className="find-projects-page">
+
+      {/* =================================
+          HEADER
+      ================================= */}
+
       <header className="find-projects-header">
+
+        <div>
+
+          <h1>
+            Find Projects
+          </h1>
+
+          <p>
+            Discover projects related to your
+            interests and skills.
+          </p>
+
+        </div>
+
+
         <button
-          className="find-back-button"
-          onClick={() => navigate("/dashboard")}
+          className="back-dashboard-btn"
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           ← Dashboard
         </button>
 
-        <h1>Find Projects</h1>
-        <p>Discover projects and join a team.</p>
       </header>
 
-      <main className="find-projects-content">
-        <div className="find-projects-tools">
-          <input
-            type="text"
-            placeholder="Search project name or description..."
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-          />
 
-          <select
-            value={selectedSkill}
-            onChange={(event) =>
-              setSelectedSkill(event.target.value)
-            }
-          >
-            <option value="">All Skills</option>
+      {/* =================================
+          SEARCH SECTION
+      ================================= */}
 
-            {skills.map((skill) => (
-              <option key={skill} value={skill}>
-                {skill}
-              </option>
-            ))}
-          </select>
+      <section className="project-search-section">
+
+        <div className="search-title">
+
+          <h2>
+            Search Projects
+          </h2>
+
+          <p>
+            Search by domain, skill, programming
+            language, AI tool or project name.
+          </p>
+
         </div>
 
-        {message && (
-          <p role="status" className="find-status">
-            {message}
-          </p>
-        )}
+
+        {/* SEARCH BOX */}
+
+        <div className="search-box-container">
+
+          <span className="search-icon">
+            🔎
+          </span>
+
+
+          <input
+            type="text"
+            value={searchText}
+            onChange={(event) =>
+              setSearchText(event.target.value)
+            }
+            placeholder="Search domain, skill, language or project..."
+            className="project-search-input"
+          />
+
+
+          {searchText && (
+
+            <button
+              className="clear-search-btn"
+              onClick={() =>
+                setSearchText("")
+              }
+            >
+              ✕
+            </button>
+
+          )}
+
+        </div>
+
+
+        {/* SEARCH RESULT COUNT */}
+
+        <div className="search-info">
+
+          <span>
+            {filteredProjects.length}
+          </span>
+
+          {filteredProjects.length === 1
+            ? " project found"
+            : " projects found"}
+
+        </div>
+
+      </section>
+
+
+      {/* =================================
+          MAIN CONTENT
+      ================================= */}
+
+      <main className="find-projects-container">
+
+
+        {/* =================================
+            LOADING
+        ================================= */}
 
         {loading && (
-          <p className="find-status">
-            Loading projects...
-          </p>
+
+          <div className="project-message">
+
+            <div className="message-icon">
+              ⏳
+            </div>
+
+            <h3>
+              Loading projects...
+            </h3>
+
+            <p>
+              Please wait while we find
+              available projects.
+            </p>
+
+          </div>
+
         )}
 
-        {error && (
-          <div className="find-error">
-            <p>{error}</p>
+
+        {/* =================================
+            ERROR
+        ================================= */}
+
+        {!loading && error && (
+
+          <div className="project-message error-message">
+
+            <div className="message-icon">
+              ⚠️
+            </div>
+
+            <h3>
+              Something went wrong
+            </h3>
+
+            <p>
+              {error}
+            </p>
+
+
             <button
-              onClick={() => window.location.reload()}
+              className="retry-btn"
+              onClick={loadProjects}
             >
               Try Again
             </button>
+
           </div>
+
         )}
 
-        {!loading && !error && (
-          <>
-            <p className="find-count">
-              {filteredProjects.length} project(s) found
-            </p>
 
-            {filteredProjects.length === 0 ? (
-              <div className="find-empty">
-                No projects found. Try another search.
+        {/* =================================
+            NO PROJECTS
+        ================================= */}
+
+        {!loading &&
+          !error &&
+          filteredProjects.length === 0 && (
+
+            <div className="project-message">
+
+              <div className="message-icon">
+                🔍
               </div>
-            ) : (
-              <div className="find-projects-grid">
-                {filteredProjects.map((project) => {
-                  const isApplying =
-                    applyingId === project._id;
 
-                  const isApplied =
-                    appliedIds.includes(project._id);
+              <h3>
+                No projects found
+              </h3>
 
-                  return (
-                    <article
-                      className="find-project-card"
-                      key={project._id}
-                    >
-                      <h2>{project.projectName}</h2>
+              <p>
+                No projects match your search.
+                Try another domain, skill,
+                technology or project name.
+              </p>
 
-                      <p className="find-description">
-                        {project.description}
-                      </p>
 
-                      <div className="find-project-meta">
-                        <p>
-                          <strong>Project Owner:</strong>{" "}
-                          {project.ownerEmail}
-                        </p>
+              {searchText && (
 
-                        <p>
-                          <strong>Team Size:</strong>{" "}
-                          {project.teamSize}
-                        </p>
+                <button
+                  className="retry-btn"
+                  onClick={() =>
+                    setSearchText("")
+                  }
+                >
+                  Clear Search
+                </button>
+
+              )}
+
+            </div>
+
+          )}
+
+
+        {/* =================================
+            PROJECTS
+        ================================= */}
+
+        {!loading &&
+          !error &&
+          filteredProjects.length > 0 && (
+
+            <section className="projects-grid">
+
+              {filteredProjects.map(
+                (project) => (
+
+                  <div
+                    className="find-project-card"
+                    key={project._id}
+                  >
+
+
+                    {/* =========================
+                        PROJECT HEADER
+                    ========================= */}
+
+                    <div className="project-card-header">
+
+                      <div className="project-card-icon">
+                        📁
                       </div>
 
-                      <h3>Required Skills</h3>
 
-                      <div className="find-skill-tags">
+                      <span className="project-code">
+
+                        {project.projectCode ||
+                          "PROJECT"}
+
+                      </span>
+
+                    </div>
+
+
+                    {/* =========================
+                        PROJECT NAME
+                    ========================= */}
+
+                    <h2>
+                      {project.projectName}
+                    </h2>
+
+
+                    {/* =========================
+                        DESCRIPTION
+                    ========================= */}
+
+                    <p className="project-description">
+
+                      {project.description ||
+                        "No description available."}
+
+                    </p>
+
+
+                    {/* =========================
+                        DOMAIN
+                    ========================= */}
+
+                    {project.domain && (
+
+                      <div className="project-domain">
+
+                        <span>
+                          🌐
+                        </span>
+
+                        <strong>
+                          Domain:
+                        </strong>
+
+                        <span>
+                          {project.domain}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {/* =========================
+                        PROGRAMMING LANGUAGE
+                    ========================= */}
+
+                    {project.programmingLanguage && (
+
+                      <div className="project-domain">
+
+                        <span>
+                          💻
+                        </span>
+
+                        <strong>
+                          Language:
+                        </strong>
+
+                        <span>
+                          {project.programmingLanguage}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {/* =========================
+                        AI TOOLS
+                    ========================= */}
+
+                    {Array.isArray(
+                      project.aiTools
+                    ) &&
+                      project.aiTools.length > 0 && (
+
+                        <div className="project-domain">
+
+                          <span>
+                            🤖
+                          </span>
+
+                          <strong>
+                            AI Tools:
+                          </strong>
+
+                          <span>
+                            {project.aiTools.join(
+                              ", "
+                            )}
+                          </span>
+
+                        </div>
+
+                      )}
+
+
+                    {/* =========================
+                        REQUIRED SKILLS
+                    ========================= */}
+
+                    <div className="skills-section">
+
+                      <h4>
+                        Required Skills
+                      </h4>
+
+
+                      <div className="skills-list">
+
                         {Array.isArray(
                           project.requiredSkills
                         ) &&
-                        project.requiredSkills.length > 0 ? (
+                          project.requiredSkills.length >
+                            0 ? (
+
                           project.requiredSkills.map(
-                            (skill) => (
+                            (skill, index) => (
+
                               <span
-                                className="find-skill-tag"
-                                key={skill}
+                                className="skill-tag"
+                                key={index}
                               >
                                 {skill}
                               </span>
+
                             )
                           )
+
                         ) : (
-                          <span className="find-no-skills">
-                            No specific skills
+
+                          <span className="no-skills">
+                            No specific skills mentioned
                           </span>
+
                         )}
+
                       </div>
 
-                      <button
-                        type="button"
-                        disabled={isApplying || isApplied}
-                        onClick={() => handleApply(project)}
-                      >
-                        {isApplying
-                          ? "Applying..."
-                          : isApplied
-                          ? "Applied"
-                          : "Apply to Project"}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+                    </div>
+
+
+                    {/* =========================
+                        TEAM INFORMATION
+                    ========================= */}
+
+                    <div className="team-info">
+
+                      {project.teamSize !==
+                        undefined && (
+
+                        <span>
+                          👥 Team:{" "}
+                          {project.teamSize}
+                        </span>
+
+                      )}
+
+
+                      {project.membersNeeded !==
+                        undefined && (
+
+                        <span>
+                          🧑‍💻 Needed:{" "}
+                          {project.membersNeeded}
+                        </span>
+
+                      )}
+
+                    </div>
+
+
+                    {/* =========================
+                        PROJECT OWNER
+                    ========================= */}
+
+                    <div className="project-owner">
+
+                      <span className="owner-icon">
+                        👤
+                      </span>
+
+
+                      <div>
+
+                        <span className="owner-label">
+                          Project Owner
+                        </span>
+
+
+                        <span className="owner-email">
+
+                          {project.ownerEmail ||
+                            project.email ||
+                            "Student"}
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* =========================
+                        APPLY BUTTON
+                    ========================= */}
+
+                    <button
+                      className="apply-project-btn"
+                      onClick={() =>
+                        navigate(
+                          `/apply/${project._id}`
+                        )
+                      }
+                    >
+
+                      View & Apply
+
+                      <span>
+                        →
+                      </span>
+
+                    </button>
+
+
+                  </div>
+
+                )
+              )}
+
+            </section>
+
+          )}
+
       </main>
+
     </div>
   );
 }

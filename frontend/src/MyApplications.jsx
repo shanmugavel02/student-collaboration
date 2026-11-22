@@ -240,14 +240,26 @@ function MyApplications() {
                       gap: "12px"
                     }}
                   >
-                    <h2
-                      style={{
-                        color: "#1e293b",
-                        margin: 0
-                      }}
-                    >
-                      {application.projectName || "Untitled Project"}
-                    </h2>
+                <div>
+  <p
+    style={{
+      margin: 0,
+      color: "#64748b",
+      fontSize: "12px"
+    }}
+  >
+    PROJECT CODE
+  </p>
+
+  <h2
+    style={{
+      color: "#1e293b",
+      margin: "5px 0 0"
+    }}
+  >
+    {application.projectCode || "Code not available"}
+  </h2>
+</div>
 
                     <span
                       style={{
