@@ -1875,13 +1875,19 @@ app.delete(
 // START SERVER
 // ==========================================
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(
-  PORT,
-  () => {
-    console.log(
-      `Server running on http://localhost:${PORT}`
-    );
-  }
-);
+// Run normally when developing locally
+if (require.main === module) {
+  app.listen(
+    PORT,
+    () => {
+      console.log(
+        `Server running on http://localhost:${PORT}`
+      );
+    }
+  );
+}
+
+// Export Express app for Vercel
+module.exports = app;
