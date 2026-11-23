@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
@@ -36,16 +37,29 @@ const studentSchema = new mongoose.Schema({
   bio: {
     type: String,
     default: ""
+  },
+
+  resetOTP: {
+    type: String,
+    default: null
+  },
+
+  resetOTPExpires: {
+    type: Date,
+    default: null
+  },
+
+  resetOTPAttempts: {
+    type: Number,
+    default: 0
   }
 
 });
-
 
 const Student =
   mongoose.model(
     "Student",
     studentSchema
   );
-
 
 module.exports = Student;

@@ -7,6 +7,7 @@ function Skills() {
   const navigate = useNavigate();
 
   const email = localStorage.getItem("studentEmail");
+  const token = localStorage.getItem("studentToken");
 
   const [student, setStudent] = useState(null);
 
@@ -29,7 +30,6 @@ function Skills() {
   const [showCertificateForm, setShowCertificateForm] =
     useState(false);
 
-  // Certificate popup
   const [selectedCertificate, setSelectedCertificate] =
     useState(null);
 
@@ -37,7 +37,7 @@ function Skills() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!email) {
+    if (!email || !token) {
       navigate("/");
       return;
     }
@@ -53,7 +53,15 @@ function Skills() {
   const loadProfile = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${email}`
+        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       const data = await response.json();
@@ -61,9 +69,18 @@ function Skills() {
       if (response.ok) {
         setStudent(data);
         setSkills(data.skills || []);
+      } else {
+        setError(
+          data.message || "Failed to load profile."
+        );
       }
     } catch (error) {
-      console.error("Profile loading error:", error);
+      console.error(
+        "Profile loading error:",
+        error
+      );
+
+      setError("Unable to load profile.");
     }
   };
 
@@ -74,18 +91,35 @@ function Skills() {
   const loadCertificates = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/certificates/${email}`
+        `http://localhost:5000/api/certificates/${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       const data = await response.json();
 
       if (response.ok) {
         setCertificates(data);
+      } else {
+        setError(
+          data.message ||
+            "Failed to load certificates."
+        );
       }
     } catch (error) {
       console.error(
         "Certificate loading error:",
         error
+      );
+
+      setError(
+        "Unable to load certificates."
       );
     }
   };
@@ -120,11 +154,14 @@ function Skills() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${email}`,
+        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+          email
+        )}`,
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             name: student?.name || "",
@@ -155,7 +192,11 @@ function Skills() {
         );
       }
     } catch (error) {
-      console.error("Add skill error:", error);
+      console.error(
+        "Add skill error:",
+        error
+      );
+
       setError("Unable to add skill.");
     }
   };
@@ -164,18 +205,23 @@ function Skills() {
   // Delete Skill
   // ================================
 
-  const handleDeleteSkill = async (skillToDelete) => {
+  const handleDeleteSkill = async (
+    skillToDelete
+  ) => {
     const updatedSkills = skills.filter(
       (skill) => skill !== skillToDelete
     );
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${email}`,
+        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+          email
+        )}`,
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             name: student?.name || "",
@@ -193,14 +239,17 @@ function Skills() {
       if (response.ok) {
         setSkills(updatedSkills);
         setStudent(data.student || data);
-        setMessage("Skill removed successfully.");
+        setMessage(
+          "Skill removed successfully."
+        );
 
         setTimeout(() => {
           setMessage("");
         }, 2000);
       } else {
         setError(
-          data.message || "Failed to remove skill."
+          data.message ||
+            "Failed to remove skill."
         );
       }
     } catch (error) {
@@ -260,27 +309,50 @@ function Skills() {
   // Upload Certificate
   // ================================
 
-  const handleUploadCertificate = async (event) => {
+  const handleUploadCertificate = async (
+    event
+  ) => {
     event.preventDefault();
 
     setMessage("");
     setError("");
 
-    if (
-      !certificateSkill ||
-      !certificateName.trim() ||
-      !organization.trim() ||
-      !completionDate ||
-      !certificateFile
-    ) {
+    if (!certificateSkill) {
+      setError("Please select a skill.");
+      return;
+    }
+
+    if (!certificateName.trim()) {
       setError(
-        "Please fill in all certificate details."
+        "Please enter the certificate name."
+      );
+      return;
+    }
+
+    if (!organization.trim()) {
+      setError(
+        "Please enter the organization name."
+      );
+      return;
+    }
+
+    if (!completionDate) {
+      setError(
+        "Please select the completion date."
+      );
+      return;
+    }
+
+    if (!certificateFile) {
+      setError(
+        "Please select a certificate file."
       );
       return;
     }
 
     const formData = new FormData();
 
+    // Required by the backend
     formData.append(
       "studentEmail",
       email
@@ -316,6 +388,9 @@ function Skills() {
         "http://localhost:5000/api/certificates/upload",
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
           body: formData
         }
       );
@@ -386,7 +461,10 @@ function Skills() {
       const response = await fetch(
         `http://localhost:5000/api/certificates/${certificateId}`,
         {
-          method: "DELETE"
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 
@@ -426,7 +504,9 @@ function Skills() {
   // View Certificate Popup
   // ================================
 
-  const handleViewCertificate = (certificate) => {
+  const handleViewCertificate = (
+    certificate
+  ) => {
     setSelectedCertificate(certificate);
   };
 
@@ -442,7 +522,9 @@ function Skills() {
   // Close Popup When Clicking Outside
   // ================================
 
-  const handlePopupBackgroundClick = (event) => {
+  const handlePopupBackgroundClick = (
+    event
+  ) => {
     if (
       event.target === event.currentTarget
     ) {
@@ -849,10 +931,6 @@ function Skills() {
 
                     </div>
 
-                    {/* ================================
-                        Actions
-                    ================================= */}
-
                     <div className="certificate-actions">
 
                       <button
@@ -906,8 +984,6 @@ function Skills() {
 
           <div className="certificate-modal">
 
-            {/* Modal Header */}
-
             <div className="certificate-modal-header">
 
               <div>
@@ -936,8 +1012,6 @@ function Skills() {
 
             </div>
 
-            {/* Certificate Content */}
-
             <div className="certificate-modal-content">
 
               {selectedCertificate.certificateFile
@@ -961,8 +1035,6 @@ function Skills() {
               )}
 
             </div>
-
-            {/* Modal Footer */}
 
             <div className="certificate-modal-footer">
 

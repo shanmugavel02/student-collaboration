@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
@@ -7,6 +7,38 @@ function Dashboard() {
   const navigate = useNavigate();
 
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  // ==========================================
+  // CLOSE PROFILE MENU WHEN CLICKING OUTSIDE
+  // ==========================================
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
+
+  const [student, setStudent] = useState({
+    name: localStorage.getItem("studentName") || "Student"
+  });
 
   const [stats, setStats] = useState({
     projects: 0,
@@ -18,20 +50,20 @@ function Dashboard() {
   const [activities, setActivities] = useState([]);
 
   const email = localStorage.getItem("studentEmail");
+  const token = localStorage.getItem("studentToken");
 
   /* =================================
      LOAD DASHBOARD DATA
   ================================= */
 
   useEffect(() => {
-    if (!email) {
+    if (!email || !token) {
       navigate("/");
       return;
     }
 
     loadDashboardData();
-  }, [email, navigate]);
-
+  }, [email, token, navigate]);
 
   const loadDashboardData = async () => {
     try {
@@ -54,10 +86,15 @@ function Dashboard() {
         ),
 
         fetch(
-          `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`
+          `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         )
       ]);
-
 
       const projectsData =
         await projectsResponse.json();
@@ -71,6 +108,23 @@ function Dashboard() {
       const profileData =
         await profileResponse.json();
 
+      /* =================================
+         STUDENT PROFILE
+      ================================= */
+
+      if (
+        profileResponse.ok &&
+        profileData &&
+        profileData.name
+      ) {
+        setStudent(profileData);
+
+        // Keep the latest name in localStorage
+        localStorage.setItem(
+          "studentName",
+          profileData.name
+        );
+      }
 
       /* =================================
          CALCULATE STATISTICS
@@ -90,11 +144,9 @@ function Dashboard() {
           ? receivedApplicationsData
           : [];
 
-
       const skills = Array.isArray(profileData?.skills)
         ? profileData.skills.length
         : 0;
-
 
       setStats({
         projects: projects.length,
@@ -104,13 +156,11 @@ function Dashboard() {
         skills
       });
 
-
       /* =================================
          RECENT ACTIVITY
       ================================= */
 
       const activityList = [];
-
 
       /* PROJECT ACTIVITIES */
 
@@ -130,7 +180,6 @@ function Dashboard() {
             new Date()
         });
       });
-
 
       /* SENT APPLICATION ACTIVITIES */
 
@@ -164,7 +213,6 @@ function Dashboard() {
         });
       });
 
-
       /* RECEIVED APPLICATION ACTIVITIES */
 
       receivedApplications.forEach((application) => {
@@ -183,7 +231,6 @@ function Dashboard() {
         });
       });
 
-
       /* SORT BY DATE */
 
       activityList.sort(
@@ -191,7 +238,6 @@ function Dashboard() {
           new Date(b.date) -
           new Date(a.date)
       );
-
 
       /* SHOW ONLY LATEST 5 */
 
@@ -207,6 +253,24 @@ function Dashboard() {
     }
   };
 
+  /* =================================
+     GET DISPLAY NAME
+  ================================= */
+
+  const displayName =
+    student?.name ||
+    localStorage.getItem("studentName") ||
+    "Student";
+
+  /* =================================
+     GET AVATAR LETTER
+  ================================= */
+
+  const avatarLetter =
+    displayName
+      .trim()
+      .charAt(0)
+      .toUpperCase();
 
   /* =================================
      FORMAT ACTIVITY DATE
@@ -234,17 +298,19 @@ function Dashboard() {
     );
   };
 
-
   /* =================================
      LOGOUT
   ================================= */
 
   const handleLogout = () => {
     localStorage.removeItem("studentEmail");
+    localStorage.removeItem("studentName");
+    localStorage.removeItem("studentToken");
+
     setShowMenu(false);
+
     navigate("/");
   };
-
 
   /* =================================
      NAVIGATION
@@ -254,7 +320,6 @@ function Dashboard() {
     navigate(path);
     setShowMenu(false);
   };
-
 
   return (
     <div className="dashboard-page">
@@ -278,10 +343,12 @@ function Dashboard() {
           </span>
         </div>
 
-
         {/* PROFILE */}
 
-        <div className="dashboard-profile">
+        <div
+          className="dashboard-profile"
+          ref={menuRef}
+        >
 
           <button
             className="profile-button"
@@ -290,18 +357,17 @@ function Dashboard() {
             }
           >
             <div className="profile-avatar">
-              S
+              {avatarLetter}
             </div>
 
             <span>
-              Shanmugavel
+              {displayName}
             </span>
 
             <span className="profile-arrow">
               {showMenu ? "▲" : "▼"}
             </span>
           </button>
-
 
           {showMenu && (
 
@@ -348,13 +414,11 @@ function Dashboard() {
 
       </header>
 
-
       {/* =================================
           MAIN CONTENT
       ================================= */}
 
       <main className="dashboard-content">
-
 
         {/* =================================
             WELCOME
@@ -363,7 +427,7 @@ function Dashboard() {
         <section className="welcome-section">
 
           <h1>
-            Welcome, Shanmugavel 👋
+            Welcome, {displayName} 👋
           </h1>
 
           <p>
@@ -372,7 +436,6 @@ function Dashboard() {
           </p>
 
         </section>
-
 
         {/* =================================
             TOP NAVIGATION
@@ -386,20 +449,17 @@ function Dashboard() {
             👤 Profile
           </button>
 
-
           <button
             onClick={() => navigate("/skills")}
           >
             🛠️ Skills
           </button>
 
-
           <button
             onClick={() => navigate("/projects")}
           >
             📁 My Projects
           </button>
-
 
           <button
             onClick={() =>
@@ -409,7 +469,6 @@ function Dashboard() {
             🔍 Find Projects
           </button>
 
-
           <button
             onClick={() =>
               navigate("/applications")
@@ -418,7 +477,6 @@ function Dashboard() {
             📤 Applications
           </button>
 
-
           <button
             onClick={() =>
               navigate("/manage-applications")
@@ -426,7 +484,6 @@ function Dashboard() {
           >
             📥 Manage Applications
           </button>
-
 
           <button
             onClick={() =>
@@ -437,7 +494,6 @@ function Dashboard() {
           </button>
 
         </nav>
-
 
         {/* =================================
             DASHBOARD OVERVIEW
@@ -456,7 +512,6 @@ function Dashboard() {
             </p>
 
           </div>
-
 
           <div className="stats-grid">
 
@@ -482,7 +537,6 @@ function Dashboard() {
 
             </div>
 
-
             {/* APPLICATIONS SENT */}
 
             <div className="stat-card">
@@ -505,7 +559,6 @@ function Dashboard() {
 
             </div>
 
-
             {/* APPLICATIONS RECEIVED */}
 
             <div className="stat-card">
@@ -527,7 +580,6 @@ function Dashboard() {
               </div>
 
             </div>
-
 
             {/* SKILLS */}
 
@@ -555,7 +607,6 @@ function Dashboard() {
 
         </section>
 
-
         {/* =================================
             RECENT ACTIVITY
         ================================= */}
@@ -574,7 +625,6 @@ function Dashboard() {
 
           </div>
 
-
           {activities.length > 0 ? (
 
             <div className="activity-list">
@@ -591,7 +641,6 @@ function Dashboard() {
                       {activity.icon}
                     </div>
 
-
                     <div className="activity-content">
 
                       <p>
@@ -603,7 +652,6 @@ function Dashboard() {
                       </strong>
 
                     </div>
-
 
                     <span className="activity-date">
                       {formatActivityDate(

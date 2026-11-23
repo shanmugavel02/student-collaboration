@@ -19,6 +19,7 @@ function Profile() {
   const [saving, setSaving] = useState(false);
 
   const email = localStorage.getItem("studentEmail");
+  const token = localStorage.getItem("studentToken");
 
   /* =================================
      LOAD PROFILE
@@ -30,8 +31,19 @@ function Profile() {
       return;
     }
 
+    if (!token) {
+      setMessage("Authentication token not found. Please login again.");
+      return;
+    }
+
     fetch(
-      `http://localhost:5000/api/students/profile/${email}`
+      `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     )
       .then((response) => response.json())
       .then((data) => {
@@ -59,7 +71,7 @@ function Profile() {
         console.log(error);
         setMessage("Failed to load profile");
       });
-  }, [email]);
+  }, [email, token]);
 
 
   /* =================================
@@ -78,20 +90,27 @@ function Profile() {
       setSaving(true);
       setMessage("");
 
+      if (!token) {
+        setMessage("Authentication token not found. Please login again.");
+        setSaving(false);
+        return;
+      }
+
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${email}`,
+        `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             name,
             department,
             year,
             skills: skillsArray,
-            bio,
-          }),
+            bio
+          })
         }
       );
 
@@ -288,7 +307,6 @@ function Profile() {
             ================================= */}
 
             <div className="profile-grid">
-
 
               {/* =================================
                   ACADEMIC INFORMATION
@@ -523,7 +541,6 @@ function Profile() {
             <form onSubmit={handleUpdate}>
 
               <div className="form-grid">
-
 
                 {/* NAME */}
 

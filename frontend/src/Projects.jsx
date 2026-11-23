@@ -1,10 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "./Projects.css";
 
 function Projects() {
-
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
@@ -36,54 +36,67 @@ function Projects() {
   const email =
     localStorage.getItem("studentEmail");
 
+  const token =
+    localStorage.getItem("studentToken");
 
   // ==========================================
   // GET MY PROJECTS
   // ==========================================
 
   const fetchProjects = async () => {
-
     try {
+      if (!email || !token) {
+        navigate("/");
+        return;
+      }
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/my/${email}`
+        `http://localhost:5000/api/projects/my/${encodeURIComponent(email)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       const data = await response.json();
 
-      setProjects(data);
+      if (response.ok) {
+        setProjects(data);
+      } else {
+        console.log(
+          "Get Projects Error:",
+          data.message
+        );
+      }
 
     } catch (error) {
-
       console.log(
         "Get Projects Error:",
         error
       );
-
     }
-
   };
-
 
   // ==========================================
   // LOAD PROJECTS
   // ==========================================
 
   useEffect(() => {
-
-    if (email) {
-      fetchProjects();
+    if (!email || !token) {
+      navigate("/");
+      return;
     }
 
-  }, [email]);
-
+    fetchProjects();
+  }, [email, token, navigate]);
 
   // ==========================================
   // CREATE PROJECT OPPORTUNITY
   // ==========================================
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     const skillsArray =
@@ -98,21 +111,26 @@ function Projects() {
         .map((tool) => tool.trim())
         .filter((tool) => tool.length > 0);
 
-
     try {
+      const currentToken =
+        localStorage.getItem("studentToken");
+
+      if (!currentToken) {
+        navigate("/");
+        return;
+      }
 
       const response = await fetch(
         "http://localhost:5000/api/projects/create",
         {
-
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentToken}`
           },
 
           body: JSON.stringify({
-
             // Private information
             projectName: projectName,
             description: description,
@@ -140,25 +158,18 @@ function Projects() {
               recruitmentMessage,
 
             ownerEmail: email
-
           })
-
         }
       );
 
-
       const data = await response.json();
 
-
       if (response.ok) {
-
         setMessage(
           "Project opportunity created successfully!"
         );
 
-
         // Clear form
-
         setProjectName("");
         setDescription("");
         setDomain("");
@@ -172,22 +183,17 @@ function Projects() {
         setContactPhone("");
         setRecruitmentMessage("");
 
-
         // Refresh projects
-
         fetchProjects();
 
       } else {
-
         setMessage(
           data.message ||
           "Failed to create project opportunity"
         );
-
       }
 
     } catch (error) {
-
       console.log(
         "Create Project Error:",
         error
@@ -196,14 +202,10 @@ function Projects() {
       setMessage(
         "Unable to connect to server"
       );
-
     }
-
   };
 
-
   return (
-
     <div className="projects-container">
 
       {/* =====================================
@@ -242,11 +244,9 @@ function Projects() {
       ===================================== */}
 
       {message && (
-
         <div className="project-message">
           ✓ {message}
         </div>
-
       )}
 
 
@@ -644,6 +644,7 @@ function Projects() {
         <div className="section-heading">
 
           <div>
+
             <span className="projects-label">
               OWNER VIEW
             </span>
@@ -656,6 +657,7 @@ function Projects() {
               Only you can see your actual project
               information here.
             </p>
+
           </div>
 
         </div>
@@ -763,19 +765,19 @@ function Projects() {
                 {project.aiTools &&
                   project.aiTools.length > 0 && (
 
-                  <div className="project-card-section">
+                    <div className="project-card-section">
 
-                    <strong>
-                      AI Tools
-                    </strong>
+                      <strong>
+                        AI Tools
+                      </strong>
 
-                    <p>
-                      {project.aiTools.join(", ")}
-                    </p>
+                      <p>
+                        {project.aiTools.join(", ")}
+                      </p>
 
-                  </div>
+                    </div>
 
-                )}
+                  )}
 
 
                 <div className="project-card-section">
@@ -831,9 +833,7 @@ function Projects() {
       </div>
 
     </div>
-
   );
-
 }
 
 export default Projects;

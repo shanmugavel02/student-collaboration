@@ -1,7 +1,11 @@
+require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -10,8 +14,17 @@ const Student = require("./models/Student");
 const Project = require("./models/Project");
 const Application = require("./models/Application");
 const Certificate = require("./models/Certificate");
+const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
+
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 // ==========================================
 // MIDDLEWARE
@@ -144,15 +157,19 @@ app.post("/api/students/register", async (req, res) => {
       });
     }
 
-    const student = new Student({
-      name,
-      email: normalizedEmail,
-      password,
-      department,
-      year,
-      skills: [],
-      bio: ""
-    });
+   
+const hashedPassword = await bcrypt.hash(password, 10);
+
+const student = new Student({
+  name,
+  email: normalizedEmail,
+  password: hashedPassword,
+  department,
+  year,
+  skills: [],
+  bio: ""
+});
+
 
     await student.save();
 
@@ -180,7 +197,6 @@ app.post("/api/students/register", async (req, res) => {
 
 app.post("/api/students/login", async (req, res) => {
   try {
-
     const {
       email,
       password
@@ -196,14 +212,35 @@ app.post("/api/students/login", async (req, res) => {
       });
     }
 
-    if (student.password !== password) {
+    // Compare entered password with hashed password
+    const passwordMatch = await bcrypt.compare(
+      password,
+      student.password
+    );
+
+    if (!passwordMatch) {
       return res.status(401).json({
         message: "Incorrect password"
       });
     }
 
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        studentId: student._id,
+        email: student.email
+      },
+      "student_collaboration_secret_key",
+      {
+        expiresIn: "1d"
+      }
+    );
+
+    // Send token to frontend
     res.status(200).json({
       message: "Login successful",
+
+      token: token,
 
       student: {
         name: student.name,
@@ -228,11 +265,435 @@ app.post("/api/students/login", async (req, res) => {
 });
 
 // ==========================================
+// FORGOT PASSWORD - SEND OTP
+// ==========================================
+
+app.post(
+  "/api/students/forgot-password",
+  async (req, res) => {
+
+    try {
+
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          message: "Email is required"
+        });
+      }
+
+      const normalizedEmail =
+        email.trim().toLowerCase();
+
+      const student =
+        await Student.findOne({
+          email: normalizedEmail
+        });
+
+      if (!student) {
+        return res.status(404).json({
+          message: "Email is not registered"
+        });
+      }
+
+      // Generate 6-digit OTP
+      const otp =
+        Math.floor(
+          100000 +
+          Math.random() * 900000
+        ).toString();
+
+      // OTP expires after 5 minutes
+      const otpExpires =
+        new Date(
+          Date.now() + 5 * 60 * 1000
+        );
+
+      student.resetOTP = otp;
+      student.resetOTPExpires = otpExpires;
+      student.resetOTPAttempts = 0;
+
+      await student.save();
+
+      // Send OTP email
+      await emailTransporter.sendMail({
+        from: `"Student Collaboration" <${process.env.EMAIL_USER}>`,
+        to: normalizedEmail,
+        subject: "Student Collaboration - Password Reset OTP",
+        html: `
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+          ">
+
+            <h2 style="color: #2563eb;">
+              Student Collaboration
+            </h2>
+
+            <p>
+              Hello ${student.name},
+            </p>
+
+            <p>
+              We received a request to reset your password.
+            </p>
+
+            <p>
+              Your password reset OTP is:
+            </p>
+
+            <div style="
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              padding: 15px;
+              text-align: center;
+              background: #f1f5f9;
+              border-radius: 8px;
+              color: #1e293b;
+            ">
+              ${otp}
+            </div>
+
+            <p>
+              This OTP will expire in
+              <strong>5 minutes</strong>.
+            </p>
+
+            <p>
+              If you did not request a password reset,
+              you can safely ignore this email.
+            </p>
+
+            <hr>
+
+            <p style="color: #64748b; font-size: 13px;">
+              Student Skill & Project Collaboration Platform
+            </p>
+
+          </div>
+        `
+      });
+
+      res.status(200).json({
+        message:
+          "OTP sent successfully to your registered email"
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Forgot Password Error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Failed to send OTP",
+        error: error.message
+      });
+
+    }
+
+  }
+);
+
+// ==========================================
+// VERIFY PASSWORD RESET OTP
+// ==========================================
+
+app.post(
+  "/api/students/verify-otp",
+  async (req, res) => {
+
+    try {
+
+      const {
+        email,
+        otp
+      } = req.body;
+
+      if (!email || !otp) {
+        return res.status(400).json({
+          message:
+            "Email and OTP are required"
+        });
+      }
+
+      const normalizedEmail =
+        email.trim().toLowerCase();
+
+      const student =
+        await Student.findOne({
+          email: normalizedEmail
+        });
+
+      if (!student) {
+        return res.status(404).json({
+          message:
+            "Email is not registered"
+        });
+      }
+
+      // Check maximum attempts
+      if (
+        student.resetOTPAttempts >= 5
+      ) {
+
+        return res.status(429).json({
+          message:
+            "Too many incorrect attempts. Please request a new OTP."
+        });
+
+      }
+
+      // Check whether OTP exists
+      if (!student.resetOTP) {
+
+        return res.status(400).json({
+          message:
+            "No OTP found. Please request a new OTP."
+        });
+
+      }
+
+      // Check OTP expiry
+      if (
+        !student.resetOTPExpires ||
+        new Date() >
+          student.resetOTPExpires
+      ) {
+
+        student.resetOTP = null;
+        student.resetOTPExpires = null;
+        student.resetOTPAttempts = 0;
+
+        await student.save();
+
+        return res.status(400).json({
+          message:
+            "OTP has expired. Please request a new OTP."
+        });
+
+      }
+
+      // Check OTP
+      if (
+        student.resetOTP !==
+        otp.trim()
+      ) {
+
+        student.resetOTPAttempts += 1;
+
+        await student.save();
+
+        const remainingAttempts =
+          5 -
+          student.resetOTPAttempts;
+
+        return res.status(400).json({
+          message:
+            remainingAttempts > 0
+              ? `Incorrect OTP. ${remainingAttempts} attempt(s) remaining.`
+              : "Too many incorrect attempts. Please request a new OTP."
+        });
+
+      }
+
+      // OTP is correct
+      res.status(200).json({
+        message:
+          "OTP verified successfully"
+      });
+
+    } catch (error) {
+
+      console.error(
+        "OTP Verification Error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Failed to verify OTP",
+        error: error.message
+      });
+
+    }
+
+  }
+);
+
+
+// ==========================================
+// RESET PASSWORD
+// ==========================================
+
+app.post(
+  "/api/students/reset-password",
+  async (req, res) => {
+
+    try {
+
+      const {
+        email,
+        otp,
+        newPassword
+      } = req.body;
+
+      if (
+        !email ||
+        !otp ||
+        !newPassword
+      ) {
+
+        return res.status(400).json({
+          message:
+            "Email, OTP and new password are required"
+        });
+
+      }
+
+      if (
+        newPassword.length < 6
+      ) {
+
+        return res.status(400).json({
+          message:
+            "Password must be at least 6 characters"
+        });
+
+      }
+
+      const normalizedEmail =
+        email.trim().toLowerCase();
+
+      const student =
+        await Student.findOne({
+          email: normalizedEmail
+        });
+
+      if (!student) {
+
+        return res.status(404).json({
+          message:
+            "Email is not registered"
+        });
+
+      }
+
+      // Check OTP attempts
+      if (
+        student.resetOTPAttempts >= 5
+      ) {
+
+        return res.status(429).json({
+          message:
+            "Too many incorrect attempts. Please request a new OTP."
+        });
+
+      }
+
+      // Check OTP exists
+      if (!student.resetOTP) {
+
+        return res.status(400).json({
+          message:
+            "No OTP found. Please request a new OTP."
+        });
+
+      }
+
+      // Check OTP expiry
+      if (
+        !student.resetOTPExpires ||
+        new Date() >
+          student.resetOTPExpires
+      ) {
+
+        student.resetOTP = null;
+        student.resetOTPExpires = null;
+        student.resetOTPAttempts = 0;
+
+        await student.save();
+
+        return res.status(400).json({
+          message:
+            "OTP has expired. Please request a new OTP."
+        });
+
+      }
+
+      // Check OTP
+      if (
+        student.resetOTP !==
+        otp.trim()
+      ) {
+
+        student.resetOTPAttempts += 1;
+
+        await student.save();
+
+        return res.status(400).json({
+          message:
+            "Incorrect OTP"
+        });
+
+      }
+
+      // Hash the new password
+      const hashedPassword =
+        await bcrypt.hash(
+          newPassword,
+          10
+        );
+
+      student.password =
+        hashedPassword;
+
+      // Clear OTP after successful reset
+      student.resetOTP = null;
+      student.resetOTPExpires = null;
+      student.resetOTPAttempts = 0;
+
+      await student.save();
+
+      res.status(200).json({
+        message:
+          "Password changed successfully"
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Reset Password Error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Failed to reset password",
+        error: error.message
+      });
+
+    }
+
+  }
+);
+
+
+
+// ==========================================
 // GET STUDENT PROFILE
 // ==========================================
 
 app.get(
   "/api/students/profile/:email",
+  authMiddleware,
   async (req, res) => {
 
     try {
@@ -241,6 +702,22 @@ app.get(
         req.params.email
           .trim()
           .toLowerCase();
+
+      // ==========================================
+      // SECURITY CHECK
+      // Logged-in student can view only
+      // their own profile
+      // ==========================================
+
+      if (
+        !req.student ||
+        req.student.email !== email
+      ) {
+        return res.status(403).json({
+          message:
+            "You are not authorized to view this profile"
+        });
+      }
 
       const student =
         await Student.findOne({
@@ -270,12 +747,14 @@ app.get(
   }
 );
 
+
 // ==========================================
 // UPDATE STUDENT PROFILE
 // ==========================================
 
 app.put(
   "/api/students/profile/:email",
+  authMiddleware,
   async (req, res) => {
 
     try {
@@ -284,6 +763,22 @@ app.put(
         req.params.email
           .trim()
           .toLowerCase();
+
+      // ==========================================
+      // SECURITY CHECK
+      // Logged-in student can update only
+      // their own profile
+      // ==========================================
+
+      if (
+        !req.student ||
+        req.student.email !== email
+      ) {
+        return res.status(403).json({
+          message:
+            "You are not authorized to update this profile"
+        });
+      }
 
       const {
         name,
@@ -355,6 +850,7 @@ app.put(
 
 app.post(
   "/api/projects/create",
+  authMiddleware,
   async (req, res) => {
 
     try {
@@ -371,9 +867,15 @@ app.post(
         projectCode,
         contactEmail,
         contactPhone,
-        recruitmentMessage,
-        ownerEmail
+        recruitmentMessage
       } = req.body;
+
+      // Get owner email from JWT
+      // instead of trusting the request body
+      const ownerEmail =
+        req.student.email
+          .trim()
+          .toLowerCase();
 
       if (
         !projectName ||
@@ -383,8 +885,7 @@ app.post(
         !membersNeeded ||
         !projectCode ||
         !contactEmail ||
-        !contactPhone ||
-        !ownerEmail
+        !contactPhone
       ) {
 
         return res.status(400).json({
@@ -455,10 +956,10 @@ app.post(
         recruitmentMessage:
           recruitmentMessage || "",
 
+        // IMPORTANT:
+        // Owner is always the logged-in student
         ownerEmail:
           ownerEmail
-            .trim()
-            .toLowerCase()
       });
 
       await project.save();
@@ -493,14 +994,25 @@ app.post(
 
 app.get(
   "/api/projects/my/:email",
+  authMiddleware,
   async (req, res) => {
-
     try {
-
       const email =
         req.params.email
           .trim()
           .toLowerCase();
+
+      // Make sure the requested email belongs
+      // to the currently logged-in student
+      if (
+        !req.student ||
+        req.student.email !== email
+      ) {
+        return res.status(403).json({
+          message:
+            "You are not authorized to view these projects"
+        });
+      }
 
       const projects =
         await Project.find({
@@ -512,7 +1024,6 @@ app.get(
       res.status(200).json(projects);
 
     } catch (error) {
-
       console.error(
         "Get My Projects Error:",
         error
@@ -521,12 +1032,12 @@ app.get(
       res.status(500).json({
         message:
           "Failed to get projects",
-
         error: error.message
       });
     }
   }
 );
+
 
 // ==========================================
 // GET ALL PROJECTS
@@ -612,36 +1123,77 @@ app.get(
 );
 
 // ==========================================
+// GET SINGLE PROJECT BY ID
+// ==========================================
+
+app.get(
+  "/api/projects/:projectId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { projectId } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(projectId)) {
+        return res.status(400).json({
+          message: "Invalid project ID"
+        });
+      }
+
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found"
+        });
+      }
+
+      res.status(200).json(project);
+
+    } catch (error) {
+      console.error(
+        "Get Project Error:",
+        error
+      );
+
+      res.status(500).json({
+        message: "Failed to get project",
+        error: error.message
+      });
+    }
+  }
+);
+
+
+// ==========================================
 // APPLY TO PROJECT
 // ==========================================
 
 app.post(
   "/api/applications/apply",
+  authMiddleware,
   async (req, res) => {
 
     try {
 
       const {
         projectId,
-        applicantEmail,
         message
       } = req.body;
 
-      if (
-        !projectId ||
-        !applicantEmail
-      ) {
+      // Get applicant email from JWT
+      // instead of trusting the frontend
+      const applicantEmail =
+        req.student.email
+          .trim()
+          .toLowerCase();
+
+      if (!projectId) {
 
         return res.status(400).json({
           message:
-            "Project ID and applicant email are required"
+            "Project ID is required"
         });
       }
-
-      const email =
-        applicantEmail
-          .trim()
-          .toLowerCase();
 
       if (
         !mongoose.isValidObjectId(
@@ -671,7 +1223,7 @@ app.post(
       if (
         project.ownerEmail
           .trim()
-          .toLowerCase() === email
+          .toLowerCase() === applicantEmail
       ) {
 
         return res.status(400).json({
@@ -683,7 +1235,7 @@ app.post(
       const existingApplication =
         await Application.findOne({
           projectId,
-          applicantEmail: email
+          applicantEmail
         });
 
       if (existingApplication) {
@@ -706,8 +1258,10 @@ app.post(
           projectCode:
             project.projectCode,
 
+          // Applicant is always the
+          // currently logged-in student
           applicantEmail:
-            email,
+            applicantEmail,
 
           ownerEmail:
             project.ownerEmail
@@ -755,12 +1309,15 @@ app.post(
   }
 );
 
+
+
 // ==========================================
 // GET MY APPLICATIONS
 // ==========================================
 
 app.get(
   "/api/applications/my/:email",
+  authMiddleware,
   async (req, res) => {
 
     try {
@@ -769,6 +1326,18 @@ app.get(
         req.params.email
           .trim()
           .toLowerCase();
+
+      // Make sure the logged-in student
+      // can view only their own applications
+      if (
+        !req.student ||
+        req.student.email !== email
+      ) {
+        return res.status(403).json({
+          message:
+            "You are not authorized to view these applications"
+        });
+      }
 
       const applications =
         await Application.find({
@@ -798,24 +1367,44 @@ app.get(
   }
 );
 
+ id="v3k8np"
 // ==========================================
 // GET RECEIVED APPLICATIONS
 // ==========================================
 
 app.get(
   "/api/applications/received/:email",
+  authMiddleware,
   async (req, res) => {
 
     try {
 
-      const email =
+      // Get the logged-in student's email
+      // directly from the JWT
+      const loggedInEmail =
+        req.student.email
+          .trim()
+          .toLowerCase();
+
+      const requestedEmail =
         req.params.email
           .trim()
           .toLowerCase();
 
+      // Make sure the requested email
+      // belongs to the logged-in student
+      if (
+        requestedEmail !== loggedInEmail
+      ) {
+        return res.status(403).json({
+          message:
+            "You are not authorized to view these applications"
+        });
+      }
+
       const applications =
         await Application.find({
-          ownerEmail: email
+          ownerEmail: loggedInEmail
         }).sort({
           createdAt: -1
         });
@@ -847,15 +1436,16 @@ app.get(
 
 app.put(
   "/api/applications/:id/status",
+  authMiddleware,
   async (req, res) => {
 
     try {
 
       const {
-        status,
-        ownerEmail
+        status
       } = req.body;
 
+      // Validate application ID
       if (
         !mongoose.isValidObjectId(
           req.params.id
@@ -868,14 +1458,7 @@ app.put(
         });
       }
 
-      if (!ownerEmail) {
-
-        return res.status(400).json({
-          message:
-            "Owner email is required"
-        });
-      }
-
+      // Validate status
       if (
         !["Accepted", "Rejected"]
           .includes(status)
@@ -887,11 +1470,14 @@ app.put(
         });
       }
 
-      const email =
-        ownerEmail
+      // Get logged-in student's email
+      // directly from JWT
+      const loggedInEmail =
+        req.student.email
           .trim()
           .toLowerCase();
 
+      // Find application
       const application =
         await Application.findById(
           req.params.id
@@ -905,19 +1491,40 @@ app.put(
         });
       }
 
+      // Find the project associated
+      // with this application
       const project =
         await Project.findById(
           application.projectId
         );
 
-      if (
-        !project ||
+      if (!project) {
+
+        return res.status(404).json({
+          message:
+            "Project associated with this application was not found"
+        });
+      }
+
+      // Verify that the logged-in student
+      // actually owns the project
+      const projectOwnerEmail =
         project.ownerEmail
           .trim()
-          .toLowerCase() !== email ||
+          .toLowerCase();
+
+      // Verify that the application
+      // belongs to the same project owner
+      const applicationOwnerEmail =
         application.ownerEmail
           .trim()
-          .toLowerCase() !== email
+          .toLowerCase();
+
+      if (
+        projectOwnerEmail !== loggedInEmail ||
+        applicationOwnerEmail !== loggedInEmail ||
+        application.projectId.toString() !==
+          project._id.toString()
       ) {
 
         return res.status(403).json({
@@ -926,6 +1533,7 @@ app.put(
         });
       }
 
+      // Update application status
       application.status =
         status;
 
@@ -955,19 +1563,21 @@ app.put(
   }
 );
 
+
+
 // ==========================================
 // UPLOAD CERTIFICATE
 // ==========================================
 
 app.post(
   "/api/certificates/upload",
+  authMiddleware,
   upload.single("certificate"),
   async (req, res) => {
 
     try {
 
       const {
-        studentEmail,
         skill,
         certificateName,
         organization,
@@ -975,7 +1585,6 @@ app.post(
       } = req.body;
 
       if (
-        !studentEmail ||
         !skill ||
         !certificateName ||
         !organization ||
@@ -1000,8 +1609,13 @@ app.post(
         });
       }
 
+      // ==========================================
+      // USE EMAIL FROM VERIFIED JWT
+      // NEVER TRUST EMAIL FROM REQUEST BODY
+      // ==========================================
+
       const email =
-        studentEmail
+        req.student.email
           .trim()
           .toLowerCase();
 
@@ -1060,10 +1674,12 @@ app.post(
             req.file.path
           );
         } catch (fileError) {
+
           console.log(
             "File cleanup error:",
             fileError
           );
+
         }
       }
 
@@ -1081,12 +1697,14 @@ app.post(
   }
 );
 
+
 // ==========================================
 // GET STUDENT CERTIFICATES
 // ==========================================
 
 app.get(
   "/api/certificates/:email",
+  authMiddleware,
   async (req, res) => {
 
     try {
@@ -1095,6 +1713,23 @@ app.get(
         req.params.email
           .trim()
           .toLowerCase();
+
+      // ==========================================
+      // SECURITY CHECK
+      // Student can view only their own certificates
+      // ==========================================
+
+      if (
+        !req.student ||
+        req.student.email !== email
+      ) {
+
+        return res.status(403).json({
+          message:
+            "You are not authorized to view these certificates"
+        });
+
+      }
 
       const certificates =
         await Certificate.find({
@@ -1124,15 +1759,21 @@ app.get(
   }
 );
 
+
 // ==========================================
 // DELETE CERTIFICATE
 // ==========================================
 
 app.delete(
   "/api/certificates/:id",
+  authMiddleware,
   async (req, res) => {
 
     try {
+
+      // ==========================================
+      // VALIDATE CERTIFICATE ID
+      // ==========================================
 
       if (
         !mongoose.isValidObjectId(
@@ -1159,16 +1800,49 @@ app.delete(
         });
       }
 
+      // ==========================================
+      // OWNERSHIP CHECK
+      // Student can delete only their own certificate
+      // ==========================================
+
+      const loggedInEmail =
+        req.student.email
+          .trim()
+          .toLowerCase();
+
+      if (
+        certificate.studentEmail !==
+        loggedInEmail
+      ) {
+
+        return res.status(403).json({
+          message:
+            "You are not authorized to delete this certificate"
+        });
+
+      }
+
+      // ==========================================
+      // DELETE CERTIFICATE FILE
+      // ==========================================
+
       const filePath =
         path.join(
           __dirname,
           certificate.certificateFile
-            .replace("/uploads/", "uploads/")
+            .replace(
+              "/uploads/",
+              "uploads/"
+            )
         );
 
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
+
+      // ==========================================
+      // DELETE DATABASE RECORD
+      // ==========================================
 
       await Certificate.findByIdAndDelete(
         req.params.id

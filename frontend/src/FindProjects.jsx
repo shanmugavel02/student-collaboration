@@ -15,17 +15,22 @@ function FindProjects() {
      LOAD PROJECTS
   ================================= */
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
   const loadProjects = async () => {
     try {
       setLoading(true);
       setError("");
 
+      const token =
+        localStorage.getItem("studentToken");
+
       const response = await fetch(
-        "http://localhost:5000/api/projects/opportunities"
+        "http://localhost:5000/api/projects/opportunities",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       const data = await response.json();
@@ -55,6 +60,13 @@ function FindProjects() {
     }
   };
 
+  /* =================================
+     LOAD PROJECTS WHEN PAGE OPENS
+  ================================= */
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   /* =================================
      SEARCH PROJECTS
@@ -62,7 +74,6 @@ function FindProjects() {
 
   const filteredProjects = projects.filter(
     (project) => {
-
       const search = searchText
         .toLowerCase()
         .trim();
@@ -73,36 +84,30 @@ function FindProjects() {
         return true;
       }
 
-
       /* Project name */
 
       const projectName =
         project.projectName || "";
-
 
       /* Description */
 
       const description =
         project.description || "";
 
-
       /* Project code */
 
       const projectCode =
         project.projectCode || "";
-
 
       /* Domain */
 
       const domain =
         project.domain || "";
 
-
       /* Programming language */
 
       const programmingLanguage =
         project.programmingLanguage || "";
-
 
       /* AI tools */
 
@@ -111,14 +116,12 @@ function FindProjects() {
           ? project.aiTools.join(" ")
           : project.aiTools || "";
 
-
       /* Required skills */
 
       const requiredSkills =
         Array.isArray(project.requiredSkills)
           ? project.requiredSkills.join(" ")
           : project.requiredSkills || "";
-
 
       /*
         Combine all searchable information
@@ -135,17 +138,14 @@ function FindProjects() {
         ${requiredSkills}
       `.toLowerCase();
 
-
       /*
         Check whether the search text
         exists anywhere in the project
       */
 
       return searchableText.includes(search);
-
     }
   );
-
 
   return (
     <div className="find-projects-page">
@@ -169,7 +169,6 @@ function FindProjects() {
 
         </div>
 
-
         <button
           className="back-dashboard-btn"
           onClick={() =>
@@ -180,7 +179,6 @@ function FindProjects() {
         </button>
 
       </header>
-
 
       {/* =================================
           SEARCH SECTION
@@ -201,7 +199,6 @@ function FindProjects() {
 
         </div>
 
-
         {/* SEARCH BOX */}
 
         <div className="search-box-container">
@@ -209,7 +206,6 @@ function FindProjects() {
           <span className="search-icon">
             🔎
           </span>
-
 
           <input
             type="text"
@@ -221,10 +217,10 @@ function FindProjects() {
             className="project-search-input"
           />
 
-
           {searchText && (
 
             <button
+              type="button"
               className="clear-search-btn"
               onClick={() =>
                 setSearchText("")
@@ -236,7 +232,6 @@ function FindProjects() {
           )}
 
         </div>
-
 
         {/* SEARCH RESULT COUNT */}
 
@@ -254,13 +249,11 @@ function FindProjects() {
 
       </section>
 
-
       {/* =================================
           MAIN CONTENT
       ================================= */}
 
       <main className="find-projects-container">
-
 
         {/* =================================
             LOADING
@@ -287,7 +280,6 @@ function FindProjects() {
 
         )}
 
-
         {/* =================================
             ERROR
         ================================= */}
@@ -308,8 +300,8 @@ function FindProjects() {
               {error}
             </p>
 
-
             <button
+              type="button"
               className="retry-btn"
               onClick={loadProjects}
             >
@@ -319,7 +311,6 @@ function FindProjects() {
           </div>
 
         )}
-
 
         {/* =================================
             NO PROJECTS
@@ -345,10 +336,10 @@ function FindProjects() {
                 technology or project name.
               </p>
 
-
               {searchText && (
 
                 <button
+                  type="button"
                   className="retry-btn"
                   onClick={() =>
                     setSearchText("")
@@ -362,7 +353,6 @@ function FindProjects() {
             </div>
 
           )}
-
 
         {/* =================================
             PROJECTS
@@ -382,7 +372,6 @@ function FindProjects() {
                     key={project._id}
                   >
 
-
                     {/* =========================
                         PROJECT HEADER
                     ========================= */}
@@ -393,16 +382,12 @@ function FindProjects() {
                         📁
                       </div>
 
-
                       <span className="project-code">
-
                         {project.projectCode ||
                           "PROJECT"}
-
                       </span>
 
                     </div>
-
 
                     {/* =========================
                         PROJECT NAME
@@ -411,7 +396,6 @@ function FindProjects() {
                     <h2>
                       {project.projectName}
                     </h2>
-
 
                     {/* =========================
                         DESCRIPTION
@@ -423,7 +407,6 @@ function FindProjects() {
                         "No description available."}
 
                     </p>
-
 
                     {/* =========================
                         DOMAIN
@@ -449,7 +432,6 @@ function FindProjects() {
 
                     )}
 
-
                     {/* =========================
                         PROGRAMMING LANGUAGE
                     ========================= */}
@@ -473,7 +455,6 @@ function FindProjects() {
                       </div>
 
                     )}
-
 
                     {/* =========================
                         AI TOOLS
@@ -504,7 +485,6 @@ function FindProjects() {
 
                       )}
 
-
                     {/* =========================
                         REQUIRED SKILLS
                     ========================= */}
@@ -514,7 +494,6 @@ function FindProjects() {
                       <h4>
                         Required Skills
                       </h4>
-
 
                       <div className="skills-list">
 
@@ -549,7 +528,6 @@ function FindProjects() {
 
                     </div>
 
-
                     {/* =========================
                         TEAM INFORMATION
                     ========================= */}
@@ -566,7 +544,6 @@ function FindProjects() {
 
                       )}
 
-
                       {project.membersNeeded !==
                         undefined && (
 
@@ -579,7 +556,6 @@ function FindProjects() {
 
                     </div>
 
-
                     {/* =========================
                         PROJECT OWNER
                     ========================= */}
@@ -590,13 +566,11 @@ function FindProjects() {
                         👤
                       </span>
 
-
                       <div>
 
                         <span className="owner-label">
                           Project Owner
                         </span>
-
 
                         <span className="owner-email">
 
@@ -610,12 +584,12 @@ function FindProjects() {
 
                     </div>
 
-
                     {/* =========================
                         APPLY BUTTON
                     ========================= */}
 
                     <button
+                      type="button"
                       className="apply-project-btn"
                       onClick={() =>
                         navigate(
@@ -631,7 +605,6 @@ function FindProjects() {
                       </span>
 
                     </button>
-
 
                   </div>
 
