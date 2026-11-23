@@ -25,7 +25,7 @@ function ManageApplications() {
       setError("");
 
       const response = await fetch(
-        `http://localhost:5000/api/applications/received/${encodeURIComponent(email)}`,
+        `/api/applications/received/${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: {
@@ -85,7 +85,7 @@ function ManageApplications() {
       setError("");
 
       const response = await fetch(
-        `http://localhost:5000/api/applications/${applicationId}/status`,
+        `/api/applications/${applicationId}/status`,
         {
           method: "PUT",
           headers: {
@@ -488,3 +488,4 @@ function ManageApplications() {
 }
 
 export default ManageApplications;
+

@@ -37,7 +37,7 @@ function Profile() {
     }
 
     fetch(
-      `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
+      `/api/students/profile/${encodeURIComponent(email)}`,
       {
         method: "GET",
         headers: {
@@ -97,7 +97,7 @@ function Profile() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
+        `/api/students/profile/${encodeURIComponent(email)}`,
         {
           method: "PUT",
           headers: {
@@ -734,3 +734,4 @@ function Profile() {
 }
 
 export default Profile;
+

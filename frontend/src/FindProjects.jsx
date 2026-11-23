@@ -24,7 +24,7 @@ function FindProjects() {
         localStorage.getItem("studentToken");
 
       const response = await fetch(
-        "http://localhost:5000/api/projects/opportunities",
+        "/api/projects/opportunities",
         {
           method: "GET",
           headers: {
@@ -622,3 +622,4 @@ function FindProjects() {
 }
 
 export default FindProjects;
+

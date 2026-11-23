@@ -22,7 +22,7 @@ function MyApplications() {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/applications/my/${encodeURIComponent(
+          `/api/applications/my/${encodeURIComponent(
             email
           )}`,
           {
@@ -426,3 +426,4 @@ function MyApplications() {
 }
 
 export default MyApplications;
+

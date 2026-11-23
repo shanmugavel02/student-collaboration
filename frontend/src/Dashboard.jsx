@@ -74,19 +74,19 @@ function Dashboard() {
         profileResponse
       ] = await Promise.all([
         fetch(
-          `http://localhost:5000/api/projects/my/${encodeURIComponent(email)}`
+          `/api/projects/my/${encodeURIComponent(email)}`
         ),
 
         fetch(
-          `http://localhost:5000/api/applications/my/${encodeURIComponent(email)}`
+          `/api/applications/my/${encodeURIComponent(email)}`
         ),
 
         fetch(
-          `http://localhost:5000/api/applications/received/${encodeURIComponent(email)}`
+          `/api/applications/received/${encodeURIComponent(email)}`
         ),
 
         fetch(
-          `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`,
+          `/api/students/profile/${encodeURIComponent(email)}`,
           {
             method: "GET",
             headers: {
@@ -696,3 +696,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+

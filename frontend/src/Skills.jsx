@@ -53,7 +53,7 @@ function Skills() {
   const loadProfile = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+        `/api/students/profile/${encodeURIComponent(
           email
         )}`,
         {
@@ -91,7 +91,7 @@ function Skills() {
   const loadCertificates = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/certificates/${encodeURIComponent(
+        `/api/certificates/${encodeURIComponent(
           email
         )}`,
         {
@@ -154,7 +154,7 @@ function Skills() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+        `/api/students/profile/${encodeURIComponent(
           email
         )}`,
         {
@@ -214,7 +214,7 @@ function Skills() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/students/profile/${encodeURIComponent(
+        `/api/students/profile/${encodeURIComponent(
           email
         )}`,
         {
@@ -385,7 +385,7 @@ function Skills() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/certificates/upload",
+        "/api/certificates/upload",
         {
           method: "POST",
           headers: {
@@ -459,7 +459,7 @@ function Skills() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/certificates/${certificateId}`,
+        `/api/certificates/${certificateId}`,
         {
           method: "DELETE",
           headers: {
@@ -1019,7 +1019,7 @@ function Skills() {
                 .endsWith(".pdf") ? (
                 <iframe
                   className="certificate-pdf"
-                  src={`http://localhost:5000${selectedCertificate.certificateFile}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`${selectedCertificate.certificateFile}#toolbar=0&navpanes=0&scrollbar=0`}
                   title={
                     selectedCertificate.certificateName
                   }
@@ -1027,7 +1027,7 @@ function Skills() {
               ) : (
                 <img
                   className="certificate-image"
-                  src={`http://localhost:5000${selectedCertificate.certificateFile}`}
+                  src={`${selectedCertificate.certificateFile}`}
                   alt={
                     selectedCertificate.certificateName
                   }
@@ -1067,3 +1067,4 @@ function Skills() {
 }
 
 export default Skills;
+

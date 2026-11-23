@@ -32,7 +32,7 @@ function ApplyProject() {
         setError("");
 
         const response = await fetch(
-          `http://localhost:5000/api/projects/${projectId}`,
+          `/api/projects/${projectId}`,
           {
             method: "GET",
             headers: {
@@ -98,7 +98,7 @@ function ApplyProject() {
       setError("");
 
       const response = await fetch(
-        "http://localhost:5000/api/applications/apply",
+        "/api/applications/apply",
         {
           method: "POST",
           headers: {
@@ -669,3 +669,4 @@ const dividerStyle = {
 };
 
 export default ApplyProject;
+

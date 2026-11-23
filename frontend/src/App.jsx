@@ -71,7 +71,7 @@ function LoginForm() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/students/login",
+        "/api/students/login",
         {
           method: "POST",
           headers: {
@@ -118,7 +118,7 @@ function LoginForm() {
         // If backend does not return the name,
         // fetch it from the student's profile.
         const profileResponse = await fetch(
-          `http://localhost:5000/api/students/profile/${encodeURIComponent(email)}`
+          `/api/students/profile/${encodeURIComponent(email)}`
         );
 
         if (profileResponse.ok) {
@@ -402,7 +402,7 @@ function ForgotPassword({ onBack }) {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/students/forgot-password",
+        "/api/students/forgot-password",
         {
           method: "POST",
 
@@ -467,7 +467,7 @@ function ForgotPassword({ onBack }) {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/students/verify-otp",
+        "/api/students/verify-otp",
         {
           method: "POST",
 
@@ -556,7 +556,7 @@ function ForgotPassword({ onBack }) {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/students/reset-password",
+        "/api/students/reset-password",
         {
           method: "POST",
 
@@ -1008,7 +1008,7 @@ function RegisterForm() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/students/register",
+        "/api/students/register",
         {
           method: "POST",
           headers: {
@@ -1217,3 +1217,4 @@ function App() {
 }
 
 export default App;
+

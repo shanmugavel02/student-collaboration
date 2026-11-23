@@ -51,7 +51,7 @@ function Projects() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/my/${encodeURIComponent(email)}`,
+        `/api/projects/my/${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: {
@@ -121,7 +121,7 @@ function Projects() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/projects/create",
+        "/api/projects/create",
         {
           method: "POST",
 
@@ -837,3 +837,4 @@ function Projects() {
 }
 
 export default Projects;
+

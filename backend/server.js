@@ -100,8 +100,9 @@ const upload = multer({
 // MONGODB CONNECTION
 // ==========================================
 
+
 mongoose
-  .connect("mongodb://127.0.0.1:27017/studentCollaboration")
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected Successfully");
   })
